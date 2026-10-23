@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10111a">
+<title>메이플스토리 보스 파티 체크리스트</title>
+<style>
+:root{color-scheme:dark;--bg:#10111a;--panel:#1a1c29;--panel2:#12141f;--line:#2b3044;--text:#f4f4fb;--muted:#aab1c9;--purple:#9b65ff;--blue:#4d8dff;--pink:#ed5ca9;--orange:#ffad35;--green:#63d6a1}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#1b1730 0%,var(--bg) 50%);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);min-height:100vh}
+main{max-width:1180px;margin:0 auto;padding:28px 20px 44px}.hero{text-align:center;margin-bottom:24px}.logo{font-size:clamp(23px,4vw,34px);font-weight:850;letter-spacing:-1px;color:#d28cf0;margin:0 0 8px}.subtitle{color:var(--muted);font-size:14px}
+.toolbar{display:flex;justify-content:center;align-items:center;gap:9px;flex-wrap:wrap;margin:22px 0 25px}.btn{border:1px solid #353a52;background:#1b1e2d;color:#e9eaff;border-radius:10px;padding:10px 15px;font-weight:750;cursor:pointer;transition:.15s}.btn:hover{border-color:#9b65ff;transform:translateY(-1px)}.btn.active{background:var(--purple);border-color:var(--purple);color:white}.btn.reset{border-color:#e34a60;color:#ff7887}.summary{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:20px}.pill{border:1px solid var(--line);background:#171927;padding:8px 13px;border-radius:999px;font-size:13px;color:#c6cce1}.pill strong{color:white}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch}.boss{background:var(--panel);border:1px solid #30364c;border-radius:14px;overflow:hidden;box-shadow:0 8px 20px #0002;min-width:0}.boss-head{padding:15px 17px;display:flex;align-items:center;justify-content:space-between;border-left:5px solid var(--accent);background:linear-gradient(110deg,color-mix(in srgb,var(--accent) 18%,#1a1c29),#171522);border-bottom:1px solid var(--line)}.boss-head h2{font-size:20px;margin:0;font-weight:850}.count{font-size:12px;color:#c7cce0;white-space:nowrap}.items{padding:12px;display:grid;gap:9px}.party{display:flex;align-items:center;gap:11px;padding:12px 11px;background:var(--panel2);border:1px solid #2a2f43;border-radius:10px;cursor:pointer;min-height:58px;transition:.15s}.party:hover{border-color:#626a8c}.party.checked{opacity:.55;background:#101b1a;border-color:#2e6857}.party.checked .party-name{text-decoration:line-through;color:#9aa5a8}.party input{appearance:none;width:18px;height:18px;flex:0 0 18px;margin:0;border:1.5px solid #737d9c;border-radius:4px;background:#fff;cursor:pointer;position:relative}.party input:checked{background:var(--green);border-color:var(--green)}.party input:checked:after{content:"✓";position:absolute;inset:-2px 0 0;color:#0d2a20;font-size:15px;font-weight:900;text-align:center}.party-name{font-size:14px;font-weight:750;line-height:1.35;flex:1}.members{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.member{font-size:11px;font-weight:800;white-space:nowrap;padding:4px 7px;border-radius:5px;background:#2b3045;color:#d7dcf3}.member.bro{color:#9ec8ff}.member.me{color:#ffc3e4}.empty{color:var(--muted);text-align:center;padding:35px 10px;display:none}
+footer{text-align:center;color:#7f879f;font-size:12px;margin-top:25px}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){main{padding:22px 12px 30px}.grid{grid-template-columns:1fr}.toolbar{gap:7px}.btn{padding:9px 11px;font-size:13px}.boss-head h2{font-size:18px}.party{padding:11px 9px}}
+</style>
+</head>
+<body>
+<main>
+  <header class="hero">
+    <h1 class="logo">🎮 메이플스토리 보스 파티 체크리스트</h1>
+    <div class="subtitle">형과 나의 보스 일정 · 파티별 체크 상태는 이 브라우저에 자동 저장됩니다.</div>
+  </header>
+  <nav class="toolbar" aria-label="필터">
+    <button class="btn active" data-filter="all">전체 보기</button>
+    <button class="btn" data-filter="익스우">익스우</button>
+    <button class="btn" data-filter="흉성">흉성</button>
+    <button class="btn" data-filter="카링">카링</button>
+    <button class="btn" data-filter="하세">하세</button>
+    <button class="btn" data-filter="노칼 & 노쌀">노칼 & 노쌀</button>
+    <button class="btn" data-filter="unchecked">미완료만 보기</button>
+    <button class="btn reset" id="reset">체크 초기화</button>
+  </nav>
+  <section class="summary">
+    <div class="pill">완료 <strong id="done">0</strong> / <strong id="total">10</strong> 파티</div>
+    <div class="pill">진행률 <strong id="percent">0%</strong></div>
+  </section>
+  <section class="grid" id="grid" aria-label="보스 파티 목록"></section>
+  <div class="empty" id="empty">표시할 파티가 없습니다.</div>
+  <footer>체크 상태는 현재 브라우저에 저장됩니다. 다른 기기와 자동 동기화되지는 않습니다.</footer>
+</main>
+<script>
+const groups = [
+ {boss:"익스우",color:"#4d8dff",parties:[
+  {id:"exw-1",n:1,bro:"아란",me:"불독"},
+  {id:"exw-2",n:2,bro:"라라",me:"호영"},
+  {id:"exw-3",n:3,bro:"보마",me:"아크"}]},
+ {boss:"흉성",color:"#ffad35",parties:[
+  {id:"hs-1",n:1,bro:"아란",me:"불독"},
+  {id:"hs-2",n:2,bro:"보마",me:"아크"},
+  {id:"hs-3",n:3,bro:"렌",me:"호영"}]},
+ {boss:"카링",color:"#ed5ca9",parties:[
+  {id:"kaling-1",n:1,bro:"라라",me:"키네"},
+  {id:"kaling-2",n:2,bro:"렌",me:"비숍"}]},
+ {boss:"하세",color:"#9b65ff",parties:[
+  {id:"hase-1",n:1,bro:"렌",me:"비숍"}]},
+ {boss:"노칼 & 노쌀",color:"#63d6a1",parties:[
+  {id:"nokal-nosal-1",n:null,bro:"보마",me:"키네"}]}
+];
+const all = groups.flatMap(g=>g.parties);
+const storageKey="maple-boss-checklist-v1";
+let checked = {};
+try { checked = JSON.parse(localStorage.getItem(storageKey)||"{}") || {}; } catch(e) { checked={}; }
+let filter="all";
+const grid=document.getElementById("grid");
+function save(){try{localStorage.setItem(storageKey,JSON.stringify(checked));}catch(e){}}
+function updateSummary(){
+ const done=all.filter(p=>checked[p.id]).length;
+ document.getElementById("done").textContent=done;
+ document.getElementById("total").textContent=all.length;
+ document.getElementById("percent").textContent=Math.round(done/all.length*100)+"%";
+}
+function visible(p, boss){
+ if(filter==="unchecked" && checked[p.id]) return false;
+ if(filter!=="all" && filter!=="unchecked" && filter!==boss) return false;
+ return true;
+}
+function render(){
+ grid.innerHTML="";
+ let shown=0;
+ groups.forEach(g=>{
+  const parties=g.parties.filter(p=>visible(p,g.boss));
+  if(!parties.length)return;
+  shown+=parties.length;
+  const card=document.createElement("article");card.className="boss";card.style.setProperty("--accent",g.color);
+  const head=document.createElement("div");head.className="boss-head";
+  head.innerHTML=`<h2>${g.boss}</h2><span class="count">${parties.length}개 파티</span>`;
+  const items=document.createElement("div");items.className="items";
+  parties.forEach(p=>{
+   const label=document.createElement("label");label.className="party"+(checked[p.id]?" checked":"");
+   const input=document.createElement("input");input.type="checkbox";input.checked=!!checked[p.id];input.setAttribute("aria-label",g.boss+" "+(p.n? p.n+"번 파티":"파티")+" 완료");
+   input.addEventListener("change",()=>{checked[p.id]=input.checked;save();render();updateSummary();});
+   const name=document.createElement("span");name.className="party-name";name.textContent=(p.n?p.n+"번 파티":"파티")+" · "+p.bro+" + "+p.me;
+   const members=document.createElement("span");members.className="members";
+   const bro=document.createElement("span");bro.className="member bro";bro.textContent="형 "+p.bro;
+   const me=document.createElement("span");me.className="member me";me.textContent="나 "+p.me;
+   members.append(bro,me);label.append(input,name,members);items.append(label);
+  });
+  card.append(head,items);grid.append(card);
+ });
+ document.getElementById("empty").style.display=shown?"none":"block";
+ document.querySelectorAll("[data-filter]").forEach(b=>b.classList.toggle("active",b.dataset.filter===filter));
+}
+document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.filter;render();}));
+document.getElementById("reset").addEventListener("click",()=>{
+ if(confirm("모든 파티의 체크를 초기화할까요?")){checked={};save();render();updateSummary();}
+});
+render();updateSummary();
+</script>
+</body>
+</html>
